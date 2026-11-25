@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Cut Trivia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful, a little eerie, like a submarine game cabinet
+   IDEA: a dive log — each answer sinks you deeper; rarer answers go further
+   PICTURE: the ocean column itself with a depth gauge and a glowing krill
+   COLOUR and TYPE: abyss navy to surface teal, coral accent, bioluminescent cyan; Baloo 2 + Nunito
+   LAYOUT: one centred console card over the water column, gauge on the side */
+:root{color-scheme:light dark;--top:light-dark(#2aa7b8,#127a8a);--deep:light-dark(#082a4a,#020c1c);--card:light-dark(#ffffffee,#0b2238ee);--ink:light-dark(#0c2235,#e6f6ff);--soft:light-dark(#4b6476,#9cc2d6);--coral:#ff6b57;--glow:#5ff2e6;--line:light-dark(#d4e6ee,#1d3e58);--tint:light-dark(#eef6f9,#12304a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{background:#04162b}
+body{margin:0;min-height:100vh;color:var(--ink);font:16px/1.55 Nunito,system-ui,sans-serif;overflow-x:clip;background:linear-gradient(180deg,var(--top) 0%,#0e4e72 35%,var(--deep) 80%);background-attachment:fixed}
+.sea{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.sea i{position:absolute;bottom:-20px;border-radius:50%;border:1.5px solid #ffffff66;animation:rise linear infinite}
+@keyframes rise{to{transform:translateY(-110vh)}}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media(prefers-reduced-motion:reduce){.sea i{display:none}.shake{animation:none!important}}
+.wrap{position:relative;max-width:780px;margin:0 auto;padding:16px 16px 40px;display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:14px}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:12px;color:#fff}
+header h1{font:800 clamp(30px,6vw,44px)/1.05 "Baloo 2",sans-serif;margin:0}
+header .sub{margin:0;opacity:.85;font-size:14px}
+nav{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+nav button{min-height:44px;padding:8px 16px;border-radius:99px;border:0;background:#ffffff26;color:#fff;font:800 15px Nunito,sans-serif;cursor:pointer}
+nav button[aria-current=page]{background:#fff;color:#0b2238}
+nav .who{margin-left:auto;align-self:center;color:#fff;font-size:14px;opacity:.9}
+.card{background:var(--card);border-radius:22px;padding:clamp(18px,4vw,30px);box-shadow:0 20px 50px #0006;backdrop-filter:blur(6px)}
+.gauge{position:relative;border-radius:32px;background:linear-gradient(180deg,#7fe3ee,#0d4a70 50%,#020a18);border:2px solid #ffffff44;min-height:420px}
+.gauge svg{position:absolute;left:50%;width:40px;transform:translate(-50%,-50%);transition:top .9s cubic-bezier(.3,1.4,.5,1);filter:drop-shadow(0 0 6px var(--glow))}
+.gauge .m{display:none}
+h2{font:800 30px/1.1 "Baloo 2",sans-serif;margin:0 0 6px;text-wrap:balance}
+h3{font:800 20px/1.2 "Baloo 2",sans-serif;margin:22px 0 6px}
+.tag{display:inline-block;font-size:13px;font-weight:800;padding:3px 12px;border-radius:99px;background:var(--glow);color:#06303a}
+.tag.hard{background:var(--coral);color:#fff}
+.muted{color:var(--soft)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chip{min-height:44px;padding:8px 16px;border-radius:99px;border:2px solid var(--line);background:transparent;color:var(--ink);font:800 15px Nunito,sans-serif;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:light-dark(#fff,#0b2238);border-color:var(--ink)}
+.btn{min-height:48px;padding:10px 22px;border:0;border-radius:14px;background:var(--coral);color:#fff;font:800 17px Nunito,sans-serif;cursor:pointer;box-shadow:0 4px 0 #c2402f}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #c2402f}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:2px solid var(--line)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--glow);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.bar{height:10px;border-radius:9px;background:var(--line);overflow:hidden;margin:14px 0}
+.bar>b{display:block;height:100%;background:linear-gradient(90deg,var(--coral),#ffb057)}
+input[type=text]{width:100%;font:700 18px Nunito,sans-serif;padding:13px 16px;border-radius:14px;border:2px solid var(--line);background:transparent;color:var(--ink)}
+.shake{animation:shake .25s 2;border-color:var(--coral)!important}
+.q{font:800 clamp(24px,5vw,32px)/1.15 "Baloo 2",sans-serif;margin:12px 0 4px;text-wrap:balance}
+.rule{display:inline-block;margin-top:4px;font-weight:800;color:var(--coral)}
+.tiers{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:6px}
+.tiers li{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 12px;border-radius:10px;background:var(--tint)}
+.toggle{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:800;cursor:pointer}
+.toggle input{width:22px;height:22px;accent-color:var(--coral)}
+.result{font:800 34px/1.1 "Baloo 2",sans-serif}
+.pts{font-weight:800;color:var(--coral);white-space:nowrap}
+.others{font-size:14px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:8px}
+th{font-size:13px;text-align:left;color:var(--soft);font-weight:800;padding:6px 4px}
+td{padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr.me td{background:var(--tint);font-weight:800}
+.big{font:800 clamp(40px,9vw,60px)/1 "Baloo 2",sans-serif;color:var(--coral)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:12px}
+.kpi{background:var(--tint);border-radius:14px;padding:12px}
+.kpi b{display:block;font:800 26px/1.1 "Baloo 2",sans-serif}
+.kpi span{font-size:13px;color:var(--soft)}
+.hb{display:grid;grid-template-columns:7.5em minmax(0,1fr) 3em;gap:8px;align-items:center;font-size:14px;margin:5px 0}
+.hb i{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--glow),#2aa7b8)}
+.hb span:last-child{text-align:right}
+.note{font-size:14px;padding:10px 14px;border-radius:12px;background:var(--tint);margin-top:12px}
+@media(max-width:600px){.wrap{grid-template-columns:minmax(0,1fr) 40px}.gauge .m{display:none}.gauge svg{width:28px}nav .who{width:100%;margin:0}}
+</style>
+</head>
+<body>
+<div class="sea" id="sea"></div>
+<div class="wrap">
+  <header>
+    <svg width="54" height="40" viewBox="0 0 54 40" aria-hidden="true"><use href="#krill"/></svg>
+    <div><h1>Deep Cut</h1><p class="sub">Rare-answer trivia. The obvious answer floats; the obscure one sinks you deep.</p></div>
+  </header>
+  <nav aria-label="Main">
+    <button data-v="play" aria-current="page">Play</button>
+    <button data-v="board">Leaderboard</button>
+    <button data-v="stats">My stats</button>
+    <span class="who" id="who"></span>
+  </nav>
+  <main class="card" id="app" aria-live="polite"></main>
+  <div class="gauge" aria-hidden="true">
+    <span class="m" style="top:2%">0 m</span><span class="m" style="top:50%">3,500 m</span><span class="m" style="top:96%">7,000 m</span>
+    <svg id="krillpos" viewBox="0 0 54 40" style="top:4%"><use href="#krill"/></svg>
+  </div>
+</div>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="krill" viewBox="0 0 54 40"><path d="M6 22c6-12 26-16 40-8 4 2 6 6 4 9-6 8-30 12-44 2z" fill="#ff8a6b"/><path d="M14 14c8-4 22-5 32 0" stroke="#ffd0c0" stroke-width="2" fill="none"/><circle cx="44" cy="17" r="2.6" fill="#0b2238"/><path d="M48 15c4-6 6-10 5-14M47 16c6-3 7-6 7-9" stroke="#ff8a6b" stroke-width="1.6" fill="none"/><path d="M14 28l-2 8M20 29l-1 8M26 30v8M32 30l1 7" stroke="#ff8a6b" stroke-width="1.6"/></symbol>
+</defs></svg>
+<script src="config.js"></script>
+<script src="questions.js"></script>
+<script>
+{
+const TIERS=[["Plankton",10],["Shrimp",25],["Jellyfish",40],["Octopus",60],["Anglerfish",80],["Deep Cut",100]];
+const PER=7, SECS=20, HARD_SECS=30;
+const CATS=["Geography","Food","Animals","Pop culture","Science","History","Sport","Music","Words"];
+const CFG=window.DC_CONFIG||{}, ONLINE=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey);
+
+/* ---------- helpers ---------- */
+const norm=s=>String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/&/g,"and").replace(/^(the|a|an) /,"").replace(/[^a-z0-9]/g,"");
+const stem=s=>s.replace(/(es|s)$/,"");
+function lev(a,b){if(Math.abs(a.length-b.length)>2)return 9;let p=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){const c=[i];for(let j=1;j<=b.length;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[b.length]}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const fmtM=pts=>(pts*10).toLocaleString()+" m";
+const uid=()=>(crypto.randomUUID?crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c=="x"?r:(r&3|8)).toString(16)}));
+
+/* ---------- data ---------- */
+const BASE=(window.DC_DATA||[]).map(([c,q,t,hard])=>{const ans=[];t.forEach((row,ti)=>row.split(",").filter(Boolean).forEach(x=>{const names=x.split("/").map(s=>s.trim());ans.push({label:names[0],keys:names.map(norm),tier:ti})}));return{id:q,c,q,ans,hard:!!hard,rule:null}});
+const ruleOk=(rule,k)=>!rule||(rule.t==="L"?k[0]===rule.v:k.length===rule.v&&!/\d/.test(k));
+function match(p,raw,useRule=true){const n=norm(raw);if(!n)return null;let best=null,bd=9;const tol=n.length>=9?2:n.length>=5?1:0;
+  for(const a of p.ans)for(const k of a.keys){if(useRule&&!ruleOk(p.rule,k))continue;if(k===n||stem(k)===stem(n))return a;if(tol){const d=lev(k,n);if(d<=tol&&d<bd){bd=d;best=a}}}return best}
+function variant(p){const L={},N={};
+  for(const a of p.ans){const ls=new Set(),ns=new Set();for(const k of a.keys){ls.add(k[0]);if(!/\d/.test(k))ns.add(k.length)}ls.forEach(x=>L[x]=(L[x]||0)+1);ns.forEach(x=>N[x]=(N[x]||0)+1)}
+  const opts=[];for(const x in L)if(L[x]>=6&&/[a-z]/.test(x))opts.push({t:"L",v:x});for(const x in N)if(N[x]>=6&&x>=4&&x<=10)opts.push({t:"N",v:+x});
+  if(!opts.length)return null;const rule=opts[Math.floor(Math.random()*opts.length)];
+  return{...p,id:p.q+(rule.t==="L"?" | starts "+rule.v:" | len "+rule.v),hard:true,rule,ruleText:rule.t==="L"?`Must start with “${rule.v.toUpperCase()}”`:`Must have exactly ${rule.v} letters`}}
+
+/* ---------- state ---------- */
+let view="play",sel=new Set(LS.get("dc-cats",CATS)),hardOn=LS.get("dc-hard",true),used=new Set(LS.get("dc-used",[]));
+let player=LS.get("dc-player",null);if(!player){player={id:uid(),name:""};LS.set("dc-player",player)}
+let dive=[],i=0,log=[],total=0,timer=null,boardTab="today";
+const app=document.getElementById("app"),kp=document.getElementById("krillpos");
+const setDepth=s=>kp.style.top=(4+Math.min(s*10/7000,1)*90)+"%";
+function nav(v){view=v;clearTimeout(timer);document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.v===v?"page":"false"));({play:home,board:board,stats:stats})[v]()}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>nav(b.dataset.v));
+const showWho=()=>document.getElementById("who").textContent=player.name?`Diving as ${player.name}`:"";
+
+/* ---------- online ---------- */
+async function api(path,opt={}){const r=await fetch(`${CFG.supabaseUrl.replace(/\/$/,"")}/rest/v1/${path}`,{...opt,headers:{apikey:CFG.supabaseAnonKey,...(CFG.supabaseAnonKey.startsWith("eyJ")?{Authorization:`Bearer ${CFG.supabaseAnonKey}`}:{}),"Content-Type":"application/json",...(opt.headers||{})}});if(!r.ok)throw new Error(r.status+" "+await r.text());return r.status===201||r.status===204?null:r.json()}
+async function saveOnline(d){
+  await api("dives",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({id:d.id,player_id:player.id,player_name:player.name,score:d.score,categories:d.cats,hard:d.hard})});
+  await api("answers",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify(d.rows.map(r=>({dive_id:d.id,player_id:player.id,prompt:r.q,category:r.c,answer:r.raw||null,tier:r.tier,points:r.pts})))})}
+
+/* ---------- screens ---------- */
+function home(){setDepth(0);showWho();const h=LS.get("dc-history",[]);const best=h.reduce((m,d)=>Math.max(m,d.score),0);
+  app.innerHTML=`<h2>Pick your waters</h2><p class="muted">Seven prompts a dive. Guess as many times as you like until the timer runs out. Common answers score a little; rare ones score big.</p>
+  <div class="chips">${CATS.map(c=>`<button class="chip" data-c="${c}" aria-pressed="${sel.has(c)}">${c}</button>`).join("")}</div>
+  <div class="row"><button class="btn ghost" id="all" style="min-height:40px;padding:6px 14px;font-size:14px">All</button></div>
+  <label class="toggle"><input type="checkbox" id="hard" ${hardOn?"checked":""}> Include hard prompts <span class="muted" style="font-weight:600">(two conditions, letter and length rules, ${HARD_SECS}s)</span></label>
+  <ul class="tiers">${TIERS.map(([n,p])=>`<li><span>${n}</span><span class="pts">${p} pts</span></li>`).join("")}</ul>
+  ${!player.name?`<h3>Your diver name</h3><input type="text" id="nm" maxlength="20" placeholder="Name for the leaderboard" aria-label="Diver name">`:""}
+  <div class="row" style="margin-top:18px"><button class="btn" id="go">Start dive</button><span class="muted">${h.length?`Best ${fmtM(best)} · ${h.length} dives`:"Max depth is 7,000 m"}</span></div>
+  ${ONLINE?"":`<p class="note">Playing offline: your stats are saved on this device. The leaderboard turns on once the site is connected (see the setup guide).</p>`}`;
+  app.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{const c=b.dataset.c;sel.has(c)?sel.delete(c):sel.add(c);if(!sel.size)sel.add(c);LS.set("dc-cats",[...sel]);home()});
+  document.getElementById("all").onclick=()=>{sel=new Set(CATS);LS.set("dc-cats",CATS);home()};
+  document.getElementById("hard").onchange=e=>{hardOn=e.target.checked;LS.set("dc-hard",hardOn)};
+  document.getElementById("go").onclick=()=>{const nm=document.getElementById("nm");if(nm){const v=nm.value.trim().slice(0,20);if(!v){nm.classList.remove("shake");void nm.offsetWidth;nm.classList.add("shake");nm.focus();return}player.name=v;LS.set("dc-player",player)}start()}}
+
+function pick(pool,n){const fresh=pool.filter(p=>!used.has(p.id));let src=fresh.length>=n?fresh:pool;if(fresh.length<n)pool.forEach(p=>used.delete(p.id));return shuffle([...src]).slice(0,n)}
+function start(){showWho();
+  const normal=BASE.filter(p=>sel.has(p.c)&&!p.hard),hard=BASE.filter(p=>sel.has(p.c)&&p.hard);
+  let nHard=0,nVar=0;if(hardOn){nHard=Math.min(2,hard.length);nVar=2}
+  const chosen=pick(normal,PER-nHard);
+  const vars=[];for(const p of chosen.slice(0,nVar)){const v=variant(p);if(v)vars.push(v)}
+  dive=shuffle([...vars,...chosen.slice(vars.length),...pick(hard,nHard)]).slice(0,PER);
+  dive.forEach(p=>used.add(p.rule?p.q:p.id));LS.set("dc-used",[...used]);
+  i=0;log=[];total=0;setDepth(0);ask()}
+
+function ask(){const p=dive[i],secs=p.hard?HARD_SECS:SECS;
+  app.innerHTML=`<div class="row" style="justify-content:space-between"><span><span class="tag">${esc(p.c)}</span> ${p.hard?'<span class="tag hard">Hard</span>':""}</span><span class="muted">Prompt ${i+1} of ${PER} · ${fmtM(total)}</span></div>
+  <p class="q">${esc(p.q)}</p>${p.rule?`<span class="rule">${esc(p.ruleText)}</span>`:""}
+  <div class="bar"><b id="tb" style="width:100%"></b></div>
+  <form id="f" class="row"><input type="text" id="a" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Your rarest answer…" aria-label="Your answer"><button class="btn" style="flex:1">Lock it in</button></form>
+  <p id="msg" class="muted" style="min-height:1.6em;margin:10px 0 0"></p>`;
+  const a=document.getElementById("a"),msg=document.getElementById("msg");a.focus();
+  const nope=t=>{msg.textContent=t;a.value="";a.focus();a.classList.remove("shake");void a.offsetWidth;a.classList.add("shake")};
+  document.getElementById("f").onsubmit=e=>{e.preventDefault();const v=a.value.trim();if(!v)return;
+    if(match(p,v))return finish(v);
+    if(p.rule&&match(p,v,false))return nope(`“${v}” fits the topic but not the rule. Try another!`);
+    nope(`“${v}” isn't on the list. Try another!`)};
+  requestAnimationFrame(()=>{const tb=document.getElementById("tb");if(tb){tb.style.transition=`width ${secs}s linear`;tb.style.width="0%"}});
+  clearTimeout(timer);timer=setTimeout(()=>{const v=a.value.trim();finish(v&&match(p,v)?v:"",true)},secs*1000)}
+
+function finish(raw,timeout){clearTimeout(timer);const p=dive[i];const hit=raw?match(p,raw):null;
+  const rec={q:p.q+(p.rule?` (${p.ruleText.toLowerCase()})`:""),c:p.c,raw,label:hit?hit.label:"",tier:hit?hit.tier:null,pts:hit?TIERS[hit.tier][1]:0,hard:p.hard};
+  log.push(rec);total+=rec.pts;setDepth(total);
+  const ok=p.ans.filter(a=>a!==hit&&a.keys.some(k=>ruleOk(p.rule,k)));const maxT=Math.max(...ok.map(a=>a.tier),0);
+  const top=shuffle(ok.filter(a=>a.tier>=Math.min(4,maxT))).slice(0,4).map(a=>a.label);
+  const head=hit?`<p class="muted">You said “${esc(raw)}” → ${esc(hit.label)}</p><div class="result">${TIERS[hit.tier][0]}</div><p class="pts" style="font-size:20px">+${rec.pts} pts</p>`
+    :`<div class="result">${timeout?"Out of air":"No answer"}</div><p class="pts" style="font-size:20px">+0 pts</p>`;
+  app.innerHTML=`<span class="tag">${esc(p.c)}</span> ${p.hard?'<span class="tag hard">Hard</span>':""}<p class="q" style="font-size:22px">${esc(p.q)}</p>${p.rule?`<span class="rule">${esc(p.ruleText)}</span>`:""}${head}
+  <p class="others muted">${top.length?"Deep cuts you could have tried: "+top.map(esc).join(", "):""}</p>
+  <div class="row" style="margin-top:14px"><button class="btn" id="nx">${i<PER-1?"Next prompt":"Surface and see results"}</button></div>`;
+  const nx=document.getElementById("nx");nx.focus();nx.onclick=()=>{i++;i<PER?ask():done()}}
+
+async function done(){const h=LS.get("dc-history",[]);const best=h.reduce((m,d)=>Math.max(m,d.score),0);
+  const d={id:uid(),at:Date.now(),score:total,cats:[...sel],hard:hardOn,rows:log};h.push(d);LS.set("dc-history",h.slice(-300));
+  app.innerHTML=`<p class="muted">${total>best?"New personal best!":"Dive complete"}</p><div class="big">${fmtM(total)}</div><p class="muted">${total} of ${PER*100} points</p>
+  <table>${log.map(r=>`<tr><td>${esc(r.q)}<br><span class="muted">${r.raw?esc(r.raw):"—"}</span></td><td class="n">${r.tier!=null?TIERS[r.tier][0]:"—"}<br><span class="pts">${r.pts}</span></td></tr>`).join("")}</table>
+  <p class="note" id="sv">${ONLINE?"Saving to the leaderboard…":"Saved on this device."}</p>
+  <div class="row" style="margin-top:18px"><button class="btn" id="again">Dive again</button><button class="btn ghost" id="lb">Leaderboard</button><button class="btn ghost" id="hm">Change categories</button></div>`;
+  document.getElementById("again").onclick=start;document.getElementById("hm").onclick=()=>nav("play");document.getElementById("lb").onclick=()=>nav("board");
+  if(ONLINE){const sv=document.getElementById("sv");try{await saveOnline(d);sv.textContent="Saved to the leaderboard."}catch(e){sv.textContent="Couldn't reach the leaderboard; your dive is still saved on this device."}}}
+
+async function board(){setDepth(0);showWho();
+  if(!ONLINE){app.innerHTML=`<h2>Leaderboard</h2><p class="muted">The leaderboard needs the online database. Follow the setup guide to connect Supabase, then everyone who plays from your link shows up here.</p>${localTop()}`;return}
+  app.innerHTML=`<h2>Leaderboard</h2><div class="chips"><button class="chip" data-t="today" aria-pressed="${boardTab==="today"}">Today</button><button class="chip" data-t="week" aria-pressed="${boardTab==="week"}">This week</button><button class="chip" data-t="all" aria-pressed="${boardTab==="all"}">All time</button></div><div id="lbt" class="muted">Loading…</div>`;
+  app.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{boardTab=b.dataset.t;board()});
+  const since=new Date();if(boardTab==="today")since.setHours(0,0,0,0);else if(boardTab==="week"){since.setDate(since.getDate()-7)}
+  const q=`dives?select=player_id,player_name,score,hard,created_at&order=score.desc,created_at.asc&limit=25${boardTab==="all"?"":"&created_at=gte."+encodeURIComponent(since.toISOString())}`;
+  const el=document.getElementById("lbt");
+  try{const rows=await api(q);if(view!=="board")return;
+    el.outerHTML=rows.length?`<table><tr><th>#</th><th>Diver</th><th class="n">Depth</th><th class="n">When</th></tr>${rows.map((r,k)=>`<tr class="${r.player_id===player.id?"me":""}"><td>${k+1}</td><td>${esc(r.player_name)}${r.hard?' <span class="muted">· hard</span>':""}</td><td class="n">${fmtM(+r.score||0)}</td><td class="n muted">${esc(new Date(r.created_at).toLocaleDateString(undefined,{month:"short",day:"numeric"}))}</td></tr>`).join("")}</table>`:`<p class="muted">No dives yet${boardTab==="all"?"":" in this period"}. Be the first!</p>`}
+  catch(e){el.textContent="Couldn't load the leaderboard. Check your connection or the settings in config.js."}}
+function localTop(){const h=LS.get("dc-history",[]);if(!h.length)return"";const t=[...h].sort((a,b)=>b.score-a.score).slice(0,10);
+  return`<h3>Your best dives on this device</h3><table>${t.map((d,k)=>`<tr><td>${k+1}</td><td>${esc(new Date(d.at).toLocaleDateString())}</td><td class="n">${fmtM(d.score)}</td></tr>`).join("")}</table>`}
+
+function stats(){setDepth(0);showWho();const h=LS.get("dc-history",[]);
+  const nameRow=`<h3>Diver name</h3><form id="nf" class="row"><input type="text" id="nm2" maxlength="20" value="${esc(player.name)}" aria-label="Diver name" style="flex:2"><button class="btn ghost" style="flex:1">Save</button></form>`;
+  if(!h.length){app.innerHTML=`<h2>My stats</h2><p class="muted">No dives yet. Play one and your history, averages and best categories show up here.</p>${nameRow}`;bindName();return}
+  const rows=h.flatMap(d=>d.rows),n=h.length,avg=h.reduce((s,d)=>s+d.score,0)/n,best=Math.max(...h.map(d=>d.score));
+  const hits=rows.filter(r=>r.tier!=null).length;
+  const tc=TIERS.map((_,t)=>rows.filter(r=>r.tier===t).length),miss=rows.length-hits,tmax=Math.max(...tc,miss,1);
+  const cat={};rows.forEach(r=>{(cat[r.c]=cat[r.c]||{n:0,p:0}).n++;cat[r.c].p+=r.pts});
+  const cl=Object.entries(cat).map(([c,v])=>({c,n:v.n,a:v.p/v.n})).sort((a,b)=>b.a-a.a);
+  const rare=rows.filter(r=>r.tier>=4).slice(-8).reverse();
+  const last=h.slice(-10).reverse();
+  app.innerHTML=`<h2>My stats</h2><p class="muted">Saved on this device.</p>
+  <div class="kpis"><div class="kpi"><b>${n}</b><span>dives</span></div><div class="kpi"><b>${fmtM(best)}</b><span>best depth</span></div><div class="kpi"><b>${fmtM(Math.round(avg))}</b><span>average depth</span></div><div class="kpi"><b>${Math.round(hits/rows.length*100)}%</b><span>prompts answered</span></div></div>
+  <h3>Where your answers land</h3>${TIERS.map(([nm],t)=>`<div class="hb"><span>${nm}</span><i style="width:${tc[t]/tmax*100}%"></i><span>${tc[t]}</span></div>`).join("")}<div class="hb"><span>Out of air</span><i style="width:${miss/tmax*100}%;background:var(--line)"></i><span>${miss}</span></div>
+  <h3>Categories</h3><table><tr><th>Category</th><th class="n">Prompts</th><th class="n">Avg points</th></tr>${cl.map(r=>`<tr><td>${esc(r.c)}</td><td class="n">${r.n}</td><td class="n">${Math.round(r.a)}</td></tr>`).join("")}</table>
+  <p class="muted" style="font-size:14px">Strongest: <b>${esc(cl[0].c)}</b>${cl.length>1?` · Weakest: <b>${esc(cl[cl.length-1].c)}</b>`:""}</p>
+  ${rare.length?`<h3>Your rarest finds</h3><table>${rare.map(r=>`<tr><td>${esc(r.label||r.raw)}<br><span class="muted">${esc(r.q)}</span></td><td class="n">${TIERS[r.tier][0]}</td></tr>`).join("")}</table>`:""}
+  <h3>Recent dives</h3><table>${last.map(d=>`<tr><td>${esc(new Date(d.at).toLocaleString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}))}${d.hard?' <span class="muted">· hard</span>':""}</td><td class="n">${fmtM(d.score)}</td></tr>`).join("")}</table>
+  ${nameRow}`;bindName()}
+function bindName(){document.getElementById("nf").onsubmit=e=>{e.preventDefault();const v=document.getElementById("nm2").value.trim().slice(0,20);if(v){player.name=v;LS.set("dc-player",player);showWho()}}}
+
+document.getElementById("sea").innerHTML=Array.from({length:14},(_,k)=>`<i style="left:${(k*7.3+3)%100}%;animation-duration:${9+k%5*3}s;animation-delay:-${k*1.7}s;width:${5+k%4*3}px;height:${5+k%4*3}px"></i>`).join("");
+nav("play");
+}
+</script>
+</body>
+</html>
